@@ -6,7 +6,9 @@ use \ZanPHP\NovaClient\NovaClient;
 
 
 $container = Container::getInstance();
-$container->bind("heartbeatable:nova", function($_, Connection $novaConnection) {
+$container->bind("heartbeatable:nova", function($_, $args) {
+    /** @var Connection  $novaConnection */
+    $novaConnection = $args[0];
     $hbServName = "com.youzan.service.test";
     return NovaClient::getInstance($novaConnection, $hbServName);
 });
