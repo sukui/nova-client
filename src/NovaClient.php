@@ -133,7 +133,7 @@ class NovaClient implements Async, Heartbeatable
         if ($trace instanceof Trace) {
             $traceHandle = $trace->transactionBegin(Constant::NOVA_CLIENT, $this->serviceName . '.' . $method);
             $context->setTraceHandle($traceHandle);
-            $msgId = Trace::generateId();
+            $msgId =  $trace->generateId();
             $trace->logEvent(Constant::REMOTE_CALL, Constant::SUCCESS, "", $msgId);
             $trace->setRemoteCallMsgId($msgId);
             if ($trace->getRootId()) {
