@@ -95,7 +95,7 @@ class NovaClient implements Async, Heartbeatable
      * @throws NetworkException
      * @throws ProtocolException
      */
-    public function call($method, $inputArguments, $outputStruct, $exceptionStruct)
+    public function call($method, $inputArguments, $outputStruct, $exceptionStruct, $timeout = null)
     {
         /** @var int $seq */
         $seq = nova_get_sequence();
@@ -189,7 +189,10 @@ class NovaClient implements Async, Heartbeatable
             }
 
             self::$reqMap[$seq] = $context;
-            self::$seqTimerId[$seq] = Timer::after(self::$sendTimeout, function() use($debuggerTrace, $debuggerTid, $seq) {
+            if ($timeout == null) {
+                $timeout = self::$sendTimeout;
+            }
+            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($debuggerTrace, $debuggerTid, $seq) {
                 if ($debuggerTrace instanceof Tracer) {
                     $debuggerTrace->commit($debuggerTid, "warn", "timeout");
                 }
