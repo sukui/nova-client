@@ -279,7 +279,6 @@ class NovaClient implements Async, Heartbeatable
             $rpcCtx->unpackNovaAttach($pdu->attach);
             /* @var $ctx Context */
             $ctx = $context->getTask()->getContext();
-            $ctx->set("rpc-context-nova-response", $ctx);
 
 
             /** @var Trace $trace */
