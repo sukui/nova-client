@@ -77,7 +77,7 @@ class NovaClient implements Async, Heartbeatable
         $this->serviceName = $serviceName;
         $this->novaConnection = $conn;
         $this->sock = $conn->getSocket();
-        $this->novaConnection->setClientCb([$this, "recv"]);
+        $this->novaConnection->setOnReceive([$this, "recv"]);
     }
 
     public function execute(callable $callback, $task)
