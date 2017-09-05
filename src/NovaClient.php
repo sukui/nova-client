@@ -77,7 +77,7 @@ class NovaClient implements Async, Heartbeatable
         $this->serviceName = $serviceName;
         $this->novaConnection = $conn;
         $this->sock = $conn->getSocket();
-        $this->novaConnection->setClientCb([$this, "recv"]);
+        $this->novaConnection->setOnReceive([$this, "recv"]);
     }
 
     public function execute(callable $callback, $task)
@@ -274,13 +274,8 @@ class NovaClient implements Async, Heartbeatable
             }
             unset(self::$reqMap[$pdu->seqNo]);
 
-
-            $rpcCtx = new RpcContext();
-            $rpcCtx->unpackNovaAttach($pdu->attach);
             /* @var $ctx Context */
             $ctx = $context->getTask()->getContext();
-            $ctx->set("rpc-context-nova-response", $ctx);
-
 
             /** @var Trace $trace */
             $trace = $ctx->get('trace');
