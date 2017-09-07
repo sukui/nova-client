@@ -20,7 +20,7 @@ use ZanPHP\RpcContext\RpcContext;
 use ZanPHP\Timer\Timer;
 use Thrift\Exception\TApplicationException;
 use Thrift\Type\TMessageType;
-use Kdt\Iron\Nova\Protocol\Packer;
+use ZanPHP\ThriftSerialization\Packer;
 
 
 class NovaClient implements Async, Heartbeatable
