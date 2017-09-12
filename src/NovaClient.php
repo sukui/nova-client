@@ -192,14 +192,24 @@ class NovaClient implements Async, Heartbeatable
             if ($timeout == null) {
                 $timeout = self::$sendTimeout;
             }
-            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($debuggerTrace, $debuggerTid, $seq) {
+            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($trace, $debuggerTrace, $debuggerTid, $seq) {
                 if ($debuggerTrace instanceof Tracer) {
                     $debuggerTrace->commit($debuggerTid, "warn", "timeout");
                 }
+
+                /** @var ClientContext $context */
+                $context = self::$reqMap[$seq];
                 unset(self::$reqMap[$seq]);
                 unset(self::$seqTimerId[$seq]);
-                $cb = $this->currentContext->getCb();
-                call_user_func($cb, null, new NetworkException("nova recv timeout"));
+                $cb = $context->getCb();
+                $serviceName = $context->getReqServiceName();
+                $methodName = $context->getReqMethodName();
+
+                $exception = new NetworkException("nova recv timeout, serviceName = $serviceName, methodName = $methodName");
+                if ($trace instanceof Trace) {
+                    $trace->commit($context->getTraceHandle(), $exception);
+                }
+                call_user_func($cb, null, $exception);
             });
 
             yield $this;
