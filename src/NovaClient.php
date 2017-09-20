@@ -20,7 +20,7 @@ use ZanPHP\RpcContext\RpcContext;
 use ZanPHP\Timer\Timer;
 use Thrift\Exception\TApplicationException;
 use Thrift\Type\TMessageType;
-use Kdt\Iron\Nova\Protocol\Packer;
+use ZanPHP\ThriftSerialization\Packer;
 
 
 class NovaClient implements Async, Heartbeatable
@@ -77,7 +77,7 @@ class NovaClient implements Async, Heartbeatable
         $this->serviceName = $serviceName;
         $this->novaConnection = $conn;
         $this->sock = $conn->getSocket();
-        $this->novaConnection->setClientCb([$this, "recv"]);
+        $this->novaConnection->setOnReceive([$this, "recv"]);
     }
 
     public function execute(callable $callback, $task)
@@ -195,16 +195,27 @@ class NovaClient implements Async, Heartbeatable
                 $timeout = self::$sendTimeout;
             }
             self::$seqTimerId[$seq] = Timer::after($timeout, function() use($trace, $debuggerTrace,$traceHandle, $debuggerTid, $seq) {
+
                 if ($trace instanceof Tracer) {
                     $trace->commit($traceHandle, "warn", "timeout");
                 }
                 if ($debuggerTrace instanceof Tracer) {
                     $debuggerTrace->commit($debuggerTid, "warn", "timeout");
                 }
+
+                /** @var ClientContext $context */
+                $context = self::$reqMap[$seq];
                 unset(self::$reqMap[$seq]);
                 unset(self::$seqTimerId[$seq]);
-                $cb = $this->currentContext->getCb();
-                call_user_func($cb, null, new NetworkException("nova recv timeout"));
+                $cb = $context->getCb();
+                $serviceName = $context->getReqServiceName();
+                $methodName = $context->getReqMethodName();
+
+                $exception = new NetworkException("nova recv timeout, serviceName = $serviceName, methodName = $methodName");
+                if ($trace instanceof Trace) {
+                    $trace->commit($context->getTraceHandle(), $exception);
+                }
+                call_user_func($cb, null, $exception);
             });
 
             yield $this;
@@ -279,13 +290,8 @@ class NovaClient implements Async, Heartbeatable
             }
             unset(self::$reqMap[$pdu->seqNo]);
 
-
-            $rpcCtx = new RpcContext();
-            $rpcCtx->unpackNovaAttach($pdu->attach);
             /* @var $ctx Context */
             $ctx = $context->getTask()->getContext();
-            $ctx->set("rpc-context-nova-response", $ctx);
-
 
             /** @var Trace $trace */
             $trace = $ctx->get('trace');

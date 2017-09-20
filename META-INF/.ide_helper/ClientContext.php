@@ -4,203 +4,131 @@ namespace Kdt\Iron\Nova\Network;
 
 class ClientContext
 {
-    private $_reqServiceName;
-    private $_reqMethodName;
-    private $_reqSeqNo;  
-    private $_attachmentContent;
-    private $_outputStruct;
-    private $_exceptionStruct;
-    private $_packer;
-    private $_cb;
-    private $_task;
-    private $_startTime;//us
-    private $_traceHandle;
-    private $_debuggerTraceTid;
+    private $ClientContext;
 
-    /**
-     * @return mixed
-     */
+    public function __construct()
+    {
+        $this->ClientContext = new \ZanPHP\NovaClient\ClientContext();
+    }
+
     public function getTask()
     {
-        return $this->_task;
+        $this->ClientContext->getTask();
     }
 
-    /**
-     * @param mixed $task
-     */
     public function setTask($task)
     {
-        $this->_task = $task;
+        $this->ClientContext->setTask($task);
     }
 
-    /**
-     * @return mixed
-     */
     public function getCb()
     {
-        return $this->_cb;
+        $this->ClientContext->getCb();
     }
 
-    /**
-     * @param mixed $cb
-     */
     public function setCb($cb)
     {
-        $this->_cb = $cb;
+        $this->ClientContext->setCb($cb);
     }
 
-    /**
-     * @return mixed
-     */
     public function getPacker()
     {
-        return $this->_packer;
+        $this->ClientContext->getPacker();
     }
 
-    /**
-     * @param mixed $packer
-     */
     public function setPacker($packer)
     {
-        $this->_packer = $packer;
+        $this->ClientContext->setPacker($packer);
     }
 
-    /**
-     * @return mixed
-     */
     public function getReqServiceName()
     {
-        return $this->_reqServiceName;
+        $this->ClientContext->getReqServiceName();
     }
 
-    /**
-     * @param mixed $reqServiceName
-     */
     public function setReqServiceName($reqServiceName)
     {
-        $this->_reqServiceName = $reqServiceName;
+        $this->ClientContext->setReqServiceName($reqServiceName);
     }
 
-    /**
-     * @return mixed
-     */
     public function getReqMethodName()
     {
-        return $this->_reqMethodName;
+        $this->ClientContext->getReqMethodName();
     }
 
-    /**
-     * @param mixed $reqMethodName
-     */
     public function setReqMethodName($reqMethodName)
     {
-        $this->_reqMethodName = $reqMethodName;
+        $this->ClientContext->setReqMethodName($reqMethodName);
     }
 
-    /**
-     * @return mixed
-     */
     public function getReqSeqNo()
     {
-        return $this->_reqSeqNo;
+        $this->ClientContext->getReqSeqNo();
     }
 
-    /**
-     * @param mixed $reqSeqNo
-     */
     public function setReqSeqNo($reqSeqNo)
     {
-        $this->_reqSeqNo = $reqSeqNo;
+        $this->ClientContext->setReqSeqNo($reqSeqNo);
     }
 
-    /**
-     * @return mixed
-     */
     public function getAttachmentContent()
     {
-        return $this->_attachmentContent;
+        $this->ClientContext->getAttachmentContent();
     }
 
-    /**
-     * @param mixed $attachmentContent
-     */
     public function setAttachmentContent($attachmentContent)
     {
-        $this->_attachmentContent = $attachmentContent;
+        $this->ClientContext->setAttachmentContent($attachmentContent);
     }
 
-    /**
-     * @return mixed
-     */
     public function getOutputStruct()
     {
-        return $this->_outputStruct;
+        $this->ClientContext->getOutputStruct();
     }
 
-    /**
-     * @param mixed $outputStruct
-     */
     public function setOutputStruct($outputStruct)
     {
-        $this->_outputStruct = $outputStruct;
+        $this->ClientContext->setOutputStruct($outputStruct);
     }
 
-    /**
-     * @return mixed
-     */
     public function getExceptionStruct()
     {
-        return $this->_exceptionStruct;
+        $this->ClientContext->getExceptionStruct();
     }
 
-    /**
-     * @param mixed $exceptionStruct
-     */
     public function setExceptionStruct($exceptionStruct)
     {
-        $this->_exceptionStruct = $exceptionStruct;
+        $this->ClientContext->setExceptionStruct($exceptionStruct);
     }
 
-    /**
-     * @return mixed
-     */
     public function getStartTime()
     {
-        return $this->_startTime;
+        $this->ClientContext->getStartTime();
     }
 
-    /**
-     */
     public function setStartTime()
     {
-        $this->_startTime = microtime(true);
+        $this->ClientContext->setStartTime();
     }
 
-    /**
-     * @return mixed
-     */
     public function getTraceHandle()
     {
-        return $this->_traceHandle;
+        $this->ClientContext->getTraceHandle();
     }
 
-    /**
-     * @param mixed $traceHandle
-     */
     public function setTraceHandle($traceHandle)
     {
-        $this->_traceHandle = $traceHandle;
+        $this->ClientContext->setTraceHandle($traceHandle);
     }
 
     public function getDebuggerTraceTid()
     {
-        return $this->_debuggerTraceTid;
+        $this->ClientContext->getDebuggerTraceTid();
     }
 
     public function setDebuggerTraceTid($tid)
     {
-        $this->_debuggerTraceTid = $tid;
+        $this->ClientContext->setDebuggerTraceTid($tid);
     }
-
 
 }
