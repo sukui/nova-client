@@ -280,7 +280,7 @@ class NovaClient implements Async, Heartbeatable
             /** @var ClientContext $context */
             $context = isset(self::$reqMap[$pdu->seqNo]) ? self::$reqMap[$pdu->seqNo] : null;
             if (!$context) {
-                sys_echo("The timeout response finally returned: ".$context->getReqServiceName()."/".$context->getReqMethodName());
+                sys_echo("The timeout response finally returned");
                 return;
             }
             unset(self::$reqMap[$pdu->seqNo]);
