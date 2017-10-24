@@ -3,12 +3,12 @@
   "require": {
     "php": ">=5.6",
     "zanphp/contracts": "dev-master",
-    "zanphp/coroutine": "dev-master",
+    "zanphp/coroutine": "dev-laogui",
     "zanphp/timer": "dev-master",
-    "zanphp/rpc-context": "dev-master",
+    "zanphp/rpc-context": "dev-laogui",
     "packaged/thrift": "0.9.2.1",
     "zanphp/exception": "dev-master",
-    "zanphp/nova": "dev-master"
+    "zanphp/nova": "dev-laogui"
   },
   "autoload": {
     "psr-4": {

@@ -6,6 +6,7 @@ class ClientContext
 {
     private $reqServiceName;
     private $reqMethodName;
+    private $reqArgs;
     private $reqSeqNo;
     private $attachmentContent;
     private $outputStruct;
@@ -95,6 +96,22 @@ class ClientContext
     public function setReqMethodName($reqMethodName)
     {
         $this->reqMethodName = $reqMethodName;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getReqArgs()
+    {
+        return $this->reqArgs;
+    }
+
+    /**
+     * @param mixed $args
+     */
+    public function setReqArgs($args)
+    {
+        $this->reqArgs = $args;
     }
 
     /**
