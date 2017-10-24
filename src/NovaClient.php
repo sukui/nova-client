@@ -192,7 +192,8 @@ class NovaClient implements Async, Heartbeatable
             if ($timeout == null) {
                 $timeout = self::$sendTimeout;
             }
-            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($trace, $debuggerTrace, $debuggerTid, $seq) {
+            $peer = $this->novaConnection->getConfig();
+            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($trace, $debuggerTrace, $debuggerTid, $seq, $peer) {
                 if ($debuggerTrace instanceof Tracer) {
                     $debuggerTrace->commit($debuggerTid, "warn", "timeout");
                 }
@@ -205,7 +206,7 @@ class NovaClient implements Async, Heartbeatable
                 $serviceName = $context->getReqServiceName();
                 $methodName = $context->getReqMethodName();
 
-                $exception = new NetworkException("nova recv timeout, serviceName = $serviceName, methodName = $methodName");
+                $exception = new NetworkException("nova recv timeout, serviceName = $serviceName, methodName = $methodName, peer server = {$peer['host']}/{$peer['port']}");
                 if ($trace instanceof Trace) {
                     $trace->commit($context->getTraceHandle(), $exception);
                 }
@@ -280,6 +281,7 @@ class NovaClient implements Async, Heartbeatable
             /** @var ClientContext $context */
             $context = isset(self::$reqMap[$pdu->seqNo]) ? self::$reqMap[$pdu->seqNo] : null;
             if (!$context) {
+                sys_echo("The timeout response finally returned");
                 return;
             }
             unset(self::$reqMap[$pdu->seqNo]);
