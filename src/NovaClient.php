@@ -17,6 +17,7 @@ use ZanPHP\Log\Log;
 use ZanPHP\NovaCodec\NovaPDU;
 use ZanPHP\NovaConnectionPool\NovaConnection;
 use ZanPHP\RpcContext\RpcContext;
+use ZanPHP\Support\Json;
 use ZanPHP\Timer\Timer;
 use Thrift\Exception\TApplicationException;
 use Thrift\Type\TMessageType;
@@ -283,8 +284,14 @@ class NovaClient implements Async, Heartbeatable
             /** @var ClientContext $context */
             $context = isset(self::$reqMap[$pdu->seqNo]) ? self::$reqMap[$pdu->seqNo] : null;
             if (!$context) {
+                $attach = Json::decode($pdu->attach);
+                if (isset($attach[RpcContext::TRACE_KEY])) {
+                    $trace = "trace = ".Json::encode($pdu->attach);
+                } else {
+                    $trace = "";
+                }
                 sys_echo("The timeout response finally returned, serviceName = {$pdu->serviceName}, 
-                    method = {$pdu->methodName}");
+                    method = {$pdu->methodName} ".$trace);
                 return;
             }
             unset(self::$reqMap[$pdu->seqNo]);
