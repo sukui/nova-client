@@ -290,8 +290,7 @@ class NovaClient implements Async, Heartbeatable
                 } else {
                     $trace = "";
                 }
-                sys_echo("The timeout response finally returned, serviceName = {$pdu->serviceName}, 
-                    method = {$pdu->methodName} ".$trace);
+                sys_echo("The timeout response finally returned, serviceName = {$pdu->serviceName}, method = {$pdu->methodName} ".$trace);
                 return;
             }
             unset(self::$reqMap[$pdu->seqNo]);
