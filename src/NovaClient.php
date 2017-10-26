@@ -206,6 +206,7 @@ class NovaClient implements Async, Heartbeatable
                 $serviceName = $context->getReqServiceName();
                 $methodName = $context->getReqMethodName();
 
+                $localIp = long2ip($localIp);
                 $exception = new NetworkException("nova recv timeout, serviceName = $serviceName, methodName = $methodName,
                         local client = $localIp/$localPort, peer server = {$peer['host']}/{$peer['port']}");
                 if ($trace instanceof Trace) {
@@ -283,7 +284,7 @@ class NovaClient implements Async, Heartbeatable
             $context = isset(self::$reqMap[$pdu->seqNo]) ? self::$reqMap[$pdu->seqNo] : null;
             if (!$context) {
                 sys_echo("The timeout response finally returned, serviceName = {$pdu->serviceName}, 
-                    method = {$pdu->methodName}, request send time = ".date("Y-m-d H:i:s", $context->getStartTime()));
+                    method = {$pdu->methodName}");
                 return;
             }
             unset(self::$reqMap[$pdu->seqNo]);
