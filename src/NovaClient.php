@@ -17,6 +17,7 @@ use ZanPHP\Log\Log;
 use ZanPHP\NovaCodec\NovaPDU;
 use ZanPHP\NovaConnectionPool\NovaConnection;
 use ZanPHP\RpcContext\RpcContext;
+use ZanPHP\Support\Json;
 use ZanPHP\Timer\Timer;
 use Thrift\Exception\TApplicationException;
 use Thrift\Type\TMessageType;
@@ -196,7 +197,7 @@ class NovaClient implements Async, Heartbeatable
             }
 
             $peer = $this->novaConnection->getConfig();
-            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($trace, $debuggerTrace,$traceHandle, $debuggerTid, $seq, $peer) {
+            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($trace, $debuggerTrace,$traceHandle, $debuggerTid, $seq, $peer, $localIp, $localPort) {
 
                 if ($trace instanceof Tracer) {
                     $trace->commit($traceHandle, "warn", "timeout");
@@ -214,7 +215,9 @@ class NovaClient implements Async, Heartbeatable
                 $serviceName = $context->getReqServiceName();
                 $methodName = $context->getReqMethodName();
 
-                $exception = new NetworkException("nova recv timeout, serviceName = $serviceName, methodName = $methodName, peer server = {$peer['host']}/{$peer['port']}");
+                $localIp = long2ip($localIp);
+                $exception = new NetworkException("nova recv timeout, serviceName = $serviceName, methodName = $methodName,
+                        local client = $localIp/$localPort, peer server = {$peer['host']}/{$peer['port']}");
                 if ($trace instanceof Trace) {
                     $trace->commit($context->getTraceHandle(), $exception);
                 }
@@ -289,7 +292,13 @@ class NovaClient implements Async, Heartbeatable
             /** @var ClientContext $context */
             $context = isset(self::$reqMap[$pdu->seqNo]) ? self::$reqMap[$pdu->seqNo] : null;
             if (!$context) {
-                sys_echo("The timeout response finally returned");
+                $attach = Json::decode($pdu->attach);
+                if (isset($attach[RpcContext::TRACE_KEY])) {
+                    $trace = "trace = ".Json::encode($pdu->attach);
+                } else {
+                    $trace = "";
+                }
+                sys_echo("The timeout response finally returned, serviceName = {$pdu->serviceName}, method = {$pdu->methodName} ".$trace);
                 return;
             }
             unset(self::$reqMap[$pdu->seqNo]);
