@@ -107,6 +107,7 @@ class NovaClient implements Async, Heartbeatable
         $hawk = make(Hawk::class);
 
         $trace = (yield getContext('trace'));
+        $traceHandle =null;
 
         $debuggerTrace = (yield getContext("debugger_trace"));
         $debuggerTid = null;
@@ -119,6 +120,7 @@ class NovaClient implements Async, Heartbeatable
         $context->setExceptionStruct($exceptionStruct);
         $context->setReqServiceName($this->serviceName);
         $context->setReqMethodName($method);
+        $context->setReqArgs($inputArguments);
         $context->setReqSeqNo($seq);
         $context->setPacker($packer);
         $context->setStartTime();
@@ -135,7 +137,7 @@ class NovaClient implements Async, Heartbeatable
             $traceHandle = $trace->transactionBegin(Constant::NOVA_CLIENT, $this->serviceName . '.' . $method);
             $context->setTraceHandle($traceHandle);
             $msgId =  $trace->generateId();
-            $trace->logEvent(Constant::REMOTE_CALL, Constant::SUCCESS, "", $msgId);
+            $trace->logEvent(Constant::REMOTE_CALL, Constant::SUCCESS, "setMsgId", $msgId);
             $trace->setRemoteCallMsgId($msgId);
             if ($trace->getRootId()) {
                 $attachment[Trace::TRACE_KEY]['rootId'] = $attachment[Trace::TRACE_KEY][Trace::ROOT_ID_KEY] = $trace->getRootId();
@@ -193,8 +195,14 @@ class NovaClient implements Async, Heartbeatable
             if ($timeout == null) {
                 $timeout = self::$sendTimeout;
             }
+
             $peer = $this->novaConnection->getConfig();
-            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($trace, $debuggerTrace, $debuggerTid, $seq, $peer, $localIp, $localPort) {
+            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($trace, $debuggerTrace,$traceHandle, $debuggerTid, $seq, $peer, $localIp, $localPort) {
+
+                if ($trace instanceof Tracer) {
+                    $trace->commit($traceHandle, "warn", "timeout");
+                }
+
                 if ($debuggerTrace instanceof Tracer) {
                     $debuggerTrace->commit($debuggerTid, "warn", "timeout");
                 }
@@ -230,7 +238,7 @@ class NovaClient implements Async, Heartbeatable
         handle_exception:
         $traceId = '';
         if ($trace instanceof Trace) {
-            $trace->commit($context->getTraceHandle(), $exception);
+            $trace->commit($context->getTraceHandle(),'error', $exception->getTraceAsString());
             $traceId = $trace->getRootId();
         }
         if ($debuggerTrace instanceof Tracer) {
@@ -334,11 +342,11 @@ class NovaClient implements Async, Heartbeatable
                         //只有系统异常上报异常信息
                         $hawk->addTotalFailureTime(Hawk::CLIENT, $pdu->serviceName, $pdu->methodName, $serverIp, microtime(true) - $context->getStartTime());
                         $hawk->addTotalFailureCount(Hawk::CLIENT, $pdu->serviceName, $pdu->methodName, $serverIp);
-                        $trace->commit($context->getTraceHandle(), $e->getTraceAsString());
+                        $trace->commit($context->getTraceHandle(),'error', $e->getTraceAsString());
                     } else {
                         $hawk->addTotalSuccessTime(Hawk::CLIENT, $pdu->serviceName, $pdu->methodName, $serverIp, microtime(true) - $context->getStartTime());
                         $hawk->addTotalSuccessCount(Hawk::CLIENT, $pdu->serviceName, $pdu->methodName, $serverIp);
-                        $trace->commit($context->getTraceHandle(), Constant::SUCCESS);
+                        $trace->commit($context->getTraceHandle(), Constant::SUCCESS,$context->getReqArgs());
                     }
                 }
                 if ($debuggerTrace instanceof Tracer) {
