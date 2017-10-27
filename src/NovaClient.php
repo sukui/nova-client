@@ -17,10 +17,11 @@ use ZanPHP\Log\Log;
 use ZanPHP\NovaCodec\NovaPDU;
 use ZanPHP\NovaConnectionPool\NovaConnection;
 use ZanPHP\RpcContext\RpcContext;
+use ZanPHP\Support\Json;
 use ZanPHP\Timer\Timer;
 use Thrift\Exception\TApplicationException;
 use Thrift\Type\TMessageType;
-use Kdt\Iron\Nova\Protocol\Packer;
+use ZanPHP\ThriftSerialization\Packer;
 
 
 class NovaClient implements Async, Heartbeatable
@@ -77,7 +78,7 @@ class NovaClient implements Async, Heartbeatable
         $this->serviceName = $serviceName;
         $this->novaConnection = $conn;
         $this->sock = $conn->getSocket();
-        $this->novaConnection->setClientCb([$this, "recv"]);
+        $this->novaConnection->setOnReceive([$this, "recv"]);
     }
 
     public function execute(callable $callback, $task)
@@ -192,14 +193,27 @@ class NovaClient implements Async, Heartbeatable
             if ($timeout == null) {
                 $timeout = self::$sendTimeout;
             }
-            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($debuggerTrace, $debuggerTid, $seq) {
+            $peer = $this->novaConnection->getConfig();
+            self::$seqTimerId[$seq] = Timer::after($timeout, function() use($trace, $debuggerTrace, $debuggerTid, $seq, $peer, $localIp, $localPort) {
                 if ($debuggerTrace instanceof Tracer) {
                     $debuggerTrace->commit($debuggerTid, "warn", "timeout");
                 }
+
+                /** @var ClientContext $context */
+                $context = self::$reqMap[$seq];
                 unset(self::$reqMap[$seq]);
                 unset(self::$seqTimerId[$seq]);
-                $cb = $this->currentContext->getCb();
-                call_user_func($cb, null, new NetworkException("nova recv timeout"));
+                $cb = $context->getCb();
+                $serviceName = $context->getReqServiceName();
+                $methodName = $context->getReqMethodName();
+
+                $localIp = long2ip($localIp);
+                $exception = new NetworkException("nova recv timeout, serviceName = $serviceName, methodName = $methodName,
+                        local client = $localIp/$localPort, peer server = {$peer['host']}/{$peer['port']}");
+                if ($trace instanceof Trace) {
+                    $trace->commit($context->getTraceHandle(), $exception);
+                }
+                call_user_func($cb, null, $exception);
             });
 
             yield $this;
@@ -270,17 +284,19 @@ class NovaClient implements Async, Heartbeatable
             /** @var ClientContext $context */
             $context = isset(self::$reqMap[$pdu->seqNo]) ? self::$reqMap[$pdu->seqNo] : null;
             if (!$context) {
+                $attach = Json::decode($pdu->attach);
+                if (isset($attach[RpcContext::TRACE_KEY])) {
+                    $trace = "trace = ".Json::encode($pdu->attach);
+                } else {
+                    $trace = "";
+                }
+                sys_echo("The timeout response finally returned, serviceName = {$pdu->serviceName}, method = {$pdu->methodName} ".$trace);
                 return;
             }
             unset(self::$reqMap[$pdu->seqNo]);
 
-
-            $rpcCtx = new RpcContext();
-            $rpcCtx->unpackNovaAttach($pdu->attach);
             /* @var $ctx Context */
             $ctx = $context->getTask()->getContext();
-            $ctx->set("rpc-context-nova-response", $ctx);
-
 
             /** @var Trace $trace */
             $trace = $ctx->get('trace');
